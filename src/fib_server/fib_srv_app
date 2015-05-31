@@ -1,0 +1,42 @@
+#!/usr/bin/python
+
+'''This script starts the fibonacci server
+'''
+
+from optparse import OptionParser
+import fib_server
+
+from common import logger
+
+import sys
+sys.path.insert(0, '/usr/local/fib/lib/')
+
+DEFAULT_PID_FILE = "/var/run/fib_srv_app.pid"
+DEFAULT_LOCK_FILE = "/var/lock/subsys/fib_srv_app"
+
+# server log initialization
+LOG = logger.init_log("/var/log/fib/fib_server.log")
+
+
+if __name__ == "__main__":
+    PARSER = OptionParser()
+    PARSER.add_option("-d", "--daemon", action="store_true", dest="daemonize",\
+                         default=False, help="Run as a daemon")
+    PARSER.add_option("-p", "--pidfile", action="store", dest="pidfile",\
+                         default=DEFAULT_PID_FILE,\
+                         help="PID file to be created, %s by default." \
+                         % DEFAULT_PID_FILE)
+    PARSER.add_option("-l", "--lockfile", action="store", dest="lockfile",\
+                         default=DEFAULT_LOCK_FILE,\
+                         help="LOCK file to be created, %s by default." \
+                         % DEFAULT_LOCK_FILE)
+    PARSER.add_option("-v", "--verbose", action="store_true", dest="verbose",\
+                         default=False,\
+                         help="Run in verbose mode.")
+    OPTIONS, _ = PARSER.parse_args()
+
+    SERVER = fib_server.FibServer(OPTIONS.pidfile,\
+                                 OPTIONS.lockfile,\
+                                 OPTIONS.daemonize,\
+                                 OPTIONS.verbose)
+    SERVER.start()

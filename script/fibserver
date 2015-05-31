@@ -1,0 +1,98 @@
+#!/bin/bash
+# fibserver the shell script takes care of start and stop
+# chkconfig:   345
+# description: fibserver
+
+# on ubuntu
+if [ -e /lib/lsb/init-functions ]; then
+    . /lib/lsb/init-functions
+
+# on SLES
+elif [ -e /etc/rc.status ]; then
+    . /etc/rc.status
+fi
+
+EXEC_PATH=/usr/local/fib/bin
+EXEC=fib_srv_app
+PID_FILE=/var/run/$EXEC.pid
+LOCK_FILE=/var/lock/subsys/$EXEC
+DAEMON=$EXEC_PATH/$EXEC
+
+
+if ! [ -x $DAEMON ] ; then
+    echo "ERROR: $DAEMON not found"
+    exit 1
+fi
+
+is_running()
+{
+    st=`ps aux | grep $DAEMON | grep -v grep`
+    echo $?
+}
+
+stop()
+{
+    test ! -e $PID_FILE && test ! -e $LOCK_FILE && echo "Error: service not running" && exit 1
+
+    echo "Stoping $EXEC ..."
+    killproc -p $PID_FILE
+    sleep 0.1
+    echo "Shutting down $EXEC: [ OK ]"
+    rm -f $LOCK_FILE
+    rm -f $PID_FILE
+}
+
+start()
+{
+    st=$(is_running)
+    if [ $st -eq 0 ]; then
+        echo "Error: $EXEC is already running ..."
+        exit 1
+    fi
+
+    if [ -e $LOCK_FILE ]; then
+        echo "Error: Lock file $LOCK_FILE exists"
+        exit 1
+    fi
+
+    touch $LOCK_FILE
+    echo "Starting $EXEC ..."
+    setsid $DAEMON -d -p $PID_FILE -l $LOCK_FILE > /dev/null 2>&1 &
+    sleep 0.1
+    echo "Starting $EXEC: [ OK ]"
+}
+
+restart()
+{
+    stop
+    start
+}
+
+status() 
+{
+    st=`ps aux | grep $DAEMON | grep -v grep`
+    if [ $? -eq 0 ]; then
+        echo "$EXEC is running ..." 
+    else
+        echo "$EXEC is not running ..." 
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        restart
+        ;;
+    status)
+        status
+    ;;
+    *)
+        echo "Usage: service $EXEC {start|stop|restart|status}"
+        exit 1
+esac
+exit $?

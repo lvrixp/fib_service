@@ -6,7 +6,8 @@
 #    Consider upgrade
 #    
 
-# This script is NOT fully tested #
+# In TODO list  #
+# NOT finished  #
 
 BASEDIR=/usr/local/fibtest
 BINDIR=$BASEDIR/bin

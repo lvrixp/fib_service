@@ -43,6 +43,7 @@ from simple_cache import SimpleStrCache
 from common import logger
 
 LOGGING = logger.get_log()
+LIMITS = 1000
 
 class FibServerTask(object):
     '''Server side task definition
@@ -135,7 +136,9 @@ class FibServerWorkers(FibWorkers):
             N = msg.N
 
             # server side defensive check
-            if N > 0:
+            if N > LIMITS:
+                res = "TODO: support large value"
+            elif N > 0:
                 res = self._get_n_fib(N)
             else:
                 res = "what do you expect :)"

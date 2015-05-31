@@ -39,6 +39,7 @@ sys.path.insert(0, '/usr/local/fib/lib')
 sys.path.insert(0, '/usr/local/fib/lib/common')
 
 from fib_msg import FibCliSrvMsg, FibSrvCliMsg
+from simple_cache import SimpleStrCache
 from common import logger
 
 LOGGING = logger.get_log()
@@ -144,6 +145,7 @@ class FibServerWorkers(FibWorkers):
             msg.result = res
             task.done(msg.serialize())
 
+    @SimpleStrCache()
     def _get_n_fib(self, n):
         '''Function to get front n fibonacci numbers
         and will calculate on demand

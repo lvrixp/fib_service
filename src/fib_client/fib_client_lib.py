@@ -5,7 +5,9 @@ import sys
 import random
 import json
 from fib_workers import FibClientTask, FibClientWorkers
+sys.path.insert(0, '/usr/local/fib/lib/common')
 
+from simple_cache import SimpleStrCache
 
 class FibClientLib(object):
     '''Client library to communicate with fibonacci service
@@ -22,6 +24,7 @@ class FibClientLib(object):
         self._workers = FibClientWorkers(worker_cnt, host, port)
         self._workers.start()
 
+    @SimpleStrCache()
     def get_fib_n(self, n):
         '''This sync RPC call will add a client task to the workers
 

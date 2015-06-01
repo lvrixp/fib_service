@@ -181,8 +181,6 @@ class FibClientWorkers(FibWorkers):
         super(FibClientWorkers, self).__init__(thread_cnt)
         self._host = host
         self._port = port
-        self._conn = None
-
 
     def _connect(self):
         '''Connect to the server

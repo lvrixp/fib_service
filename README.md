@@ -115,6 +115,7 @@
 2. Configuration management to support distributed deployment.
 3. Monitoring mechinism in case of service down.
 4. Sophisicated caching mechanism.
+5. Server side robustness improvement including error detection, etc.
 
 ## Deployment (automation in TODO LIST) ##
 ### 0. Layout ###
@@ -165,23 +166,15 @@
 
     Note:   If you want to create separate environments with different dependencies, Use the virtualenvwrapper tool(http://www.jakowicz.com/flask-apache-wsgi/”http://virtualenvwrapper.readthedocs.org/en/latest/”)
 
-### 2.Deploy fib RPC daemon service ###
+### 2.Deploy code ###
 2.1 go to <git repo>/install
 
 2.2 run ./install.sh (TODO)
 
 
-### 3.Deploy fib service to production environment ###
+### 3.Configure web service and start Fib rpc server ###
 
-3.1 Copy fib\_ws into /var/www/ folder (web root folder)
-
-3.2 Create a WSGI file under /var/www/fib\_ws/ folder, named fib\_ws.wsgi. Apache will use this file to access the fib\_ws service.
-
-    import sys
-    sys.path.append('/var/www/fib_ws/')
-    from fib_ws import app as application
-
-3.3  Create your virtual host, update file /etc/apache2/sites-enabled/000-default.conf 
+3.1  Create your virtual host, update file /etc/apache2/sites-enabled/000-default.conf 
 
     <virtualhost *:80>
         ServerAdmin webmaster@locahost
@@ -202,9 +195,25 @@
         CustomLog ${APACHE_LOG_DIR}/access.log combined
     </virtualhost>
 
-3.4 restart apache
+3.2 Start fibserver
 
-    $ /etc/init.d/apache2 restart
+    $ sudo service fibserver start 
+
+3.3 Restart apache
+
+    $ sudo service apache2 restart
 
 Check the Apache error logs at /var/log/apache2/error.log if it failed.
+
+## Limitation  ##
+
+**TODO**
+
+## Trouble shooting ##
+
+1. Service no response to normal input
+
+    sudo service fibserver restart
+    sudo service apache2 restart
+
 

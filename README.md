@@ -51,6 +51,12 @@
     * Decoupling access point and business logic handling
     * Better performance potential with effective caching at server side
 
+
+### Class hierarchy ###
+
+![image](https://github.com/lvrixp/fib_service/blob/master/img/FibClassUML.jpg)
+
+
 ### Front end ###
 
 **Web service implementation**

@@ -34,6 +34,23 @@
     	└── test_plan.md				# test plan document
     	
 ## Design ##
+
+### Core components and consideration ###
+* Flask web server
+    * Act as access point and rovide REST interface to end user
+    * Call fib client library to delegate the real work
+    * Extendable to support more interface on demand
+    * Scalability potential gained by deploying more access point
+* Fib client library
+    * Provide RPC call interface to access the core business logic
+    * Support more client implementation besides REST service
+    * flexible and lightweighted deployment with limited dependency
+* Fib RPC server
+    * Service to handle potential heavy business logic
+    * Scale out by deployment in distributed envrionment
+    * Decoupling access point and business logic handling
+    * Better performance potential with effective caching at server side
+
 ### Front end ###
 
 **Web service implementation**
@@ -120,7 +137,6 @@
         		
 * /var/www/fib_ws
 
-		├── flask
 		├── fib_ws.wsgi
 		└── fib_ws.py
 

@@ -1,33 +1,40 @@
-#!/home/steve/fib_ws/flask/bin/python
+#!/usr/bin/python
+
+'''Entry point that will handle wsgi request and provide REST service
+
+WS side will call fib client library which handles the RPC call to backend server.
+'''
+
 from flask import Flask, abort, jsonify
 import sys
-sys.path.insert(0, '/home/steve/net')
+sys.path.insert(0, '/usr/local/fib/bin/')
 
 from fib_client_lib import FibClientLib
 
-
-
 __all__ = ['app']
 
+# TODO:
+#     all such configuration should be managed by
+#     common configuration management object
 client = FibClientLib(30, "localhost", 2003)
 
+# Web service object
 app = Flask(__name__)
-cache = {}
 
+# Basic routing
 @app.route('/')
 def index():
-    return "Hello, World!"
+    return "Hello, World!\n"
 
+# Routing request for /fib/*
 @app.route('/fib/<int:front_n>', methods=['GET'])
 def get_front_n(front_n):
-    app.logger.info("info log")
-    app.logger.error("info log")
     if front_n < 1:
-        abort(404)
-    if front_n not in cache:
-        res = client.get_fib_n(front_n)
-        cache[front_n] = jsonify(res)
-    return cache[front_n]
+        # return bad request code
+        abort(400)
+        
+    res = client.get_fib_n(front_n)
+    return jsonify(res)
     
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, threaded=False)

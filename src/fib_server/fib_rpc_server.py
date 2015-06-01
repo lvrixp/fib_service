@@ -13,7 +13,7 @@ TODO:
 
 import socket
 import select, errno
-
+import struct
 import sys
 sys.path.insert(0, '/usr/local/fib/lib')
 
@@ -21,6 +21,7 @@ from common import logger
 from fib_workers import FibServerWorkers, FibServerTask
 
 LOGGING = logger.get_log()
+HEADERLEN = 8
 
 class FibRPCServer(object):
     '''FibRPCServer listen and server RPC requests.
@@ -68,7 +69,8 @@ class FibRPCServer(object):
             epoll_fd.register(listen_fd.fileno(), select.EPOLLIN)
         except select.error, msg:
             LOGGING.error(msg)
-            
+        
+        LOGGING.info("Start to serve")
         connections = {}
         addresses = {}
         datalist = {}
@@ -112,16 +114,47 @@ class FibRPCServer(object):
                     connections[fd].close()
                     LOGGING.debug("%s, %d closed" % (addresses[fd][0], addresses[fd][1])) 
                 elif select.EPOLLOUT & events:
-                    sendLen = 0             
+                    total_len = len(datalist[fd])
+                    header = struct.pack('q', total_len)
+
+                    # firstly, we send a header stands for the data
+                    # then we send the outgoing data of this length
+                    early_exit = False
+                    try:
+                        # we cannot even send 8 bytes, remove this connection
+                        if HEADERLEN != connections[fd].send(header):
+                            early_exit = True
+                    except socket.error, msg:
+                        LOGGING.error(str(msg))
+                        early_exit = True
+
+                    if early_exit:
+                        epoll_fd.unregister(fd)
+                        connections[fd].close()
+                        LOGGING.error("Send header failure, remove this connection")
+                        continue
+
+                    send_len = 0             
                     while True:
-                        sendLen += connections[fd].send(datalist[fd][sendLen:])
-                        if sendLen == len(datalist[fd]):
-                            break
-                    epoll_fd.modify(fd, select.EPOLLIN | select.EPOLLET)                 
+                        try:
+                            send_len += connections[fd].send(datalist[fd][send_len:])
+                            if send_len == len(datalist[fd]):
+                                epoll_fd.modify(fd, select.EPOLLIN | select.EPOLLET)
+                                break
+                        except socket.error, msg:
+                            # need to wait for tcp free buffer
+                            if msg.errno == errno.EAGAIN:
+                                LOGGING.debug("tcp busy, try sending again")
+                                continue
+                            else:
+                                epoll_fd.unregister(fd)
+                                connections[fd].close()
+                                LOGGING.error("Sending faulure: %s" % str(msg))
+                                break
                 else:
                     continue
 
 if __name__ == '__main__':
     LOGGING = logger.init_log('/var/log/fib/fib_rpc_server.log')
-    server = FibRPCServer(3, 'localhost', 2003)
+    server = FibRPCServer(1, 'localhost', 2003)
     server.serve_forever()

@@ -34,6 +34,7 @@ import Queue
 import select
 import json
 import socket
+import struct
 import sys
 sys.path.insert(0, '/usr/local/fib/lib')
 sys.path.insert(0, '/usr/local/fib/lib/common')
@@ -43,7 +44,8 @@ from simple_cache import SimpleStrCache
 from common import logger
 
 LOGGING = logger.get_log()
-LIMITS = 1000
+LIMITS = 100000
+HEADERLEN = 8
 
 class FibServerTask(object):
     '''Server side task definition
@@ -137,7 +139,7 @@ class FibServerWorkers(FibWorkers):
 
             # server side defensive check
             if N > LIMITS:
-                res = "TODO: support large value"
+                res = "TODO: too large N, max is %s" % LIMITS
             elif N > 0:
                 res = self._get_n_fib(N)
             else:
@@ -170,10 +172,6 @@ class FibServerWorkers(FibWorkers):
         return ' '.join(map(lambda a: str(a), self._items[:n]))
 
 
-# 64MB, client side receive length should be long enough
-RECEIVE_LEN = 64*1024*1024 
-
-
 class FibClientWorkers(FibWorkers):
     '''Client side workers definition
     '''
@@ -183,7 +181,29 @@ class FibClientWorkers(FibWorkers):
         super(FibClientWorkers, self).__init__(thread_cnt)
         self._host = host
         self._port = port
+        self._conn = None
 
+
+    def _connect(self):
+        '''Connect to the server
+        '''
+        try:
+            conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+        except socket.error, msg:
+            LOGGING.error(str(msg))
+            return None
+        
+        try:
+            conn.connect((self._host, self._port))
+            LOGGING.debug("connect to network server success")
+        except socket.error,msg:
+            LOGGING.error(str(msg))
+            return None
+
+        return conn
+
+    def _fail_data(self, N):
+        return json.dumps({'N' : N, 'result' : "failure request dropped"})
 
     def _do_work(self):
         '''This thread function will create connection with server
@@ -193,29 +213,50 @@ class FibClientWorkers(FibWorkers):
             Need to consider the improvement of blocking manner.
             When the connection failure occur, need to reconnect.
         '''
-        try:
-            connFd = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-        except socket.error, msg:
-            LOGGING.error(str(msg))
-    
-        try:
-            connFd.connect((self._host, self._port))
-            LOGGING.debug("connect to network server success")
-        except socket.error,msg:
-            LOGGING.error(str(msg))    
+
+        conn = self._connect()
+        if conn is None:
+            LOGGING.error("Create connection failure, thread exit")
+            return
 
         while True:
             task = self._tasks.get()
             msg = FibCliSrvMsg(task.N)
             data = msg.serialize()
-            if connFd.send(data) != len(data):
-                LOGGING.error("send data to network server failed")
-                break
+            try:
+                if conn.send(data) != len(data):
+                    LOGGING.error("send data to network server failed")
+                    # release task wait event
+                    task.done(self._fail_data(task.N))
+                    conn.close()
+                    return
 
-            # TODO:
-            #    consider error handling and bad connection
-            readData = connFd.recv(RECEIVE_LEN)
-            task.done(readData)
-
-        connFd.close()
+                # to receive the whole data
+                # we retrieve a header of 8 bytes first
+                # then we can know the length of incoming data
+                # this avoid complex protocol for now
+                header = conn.recv(HEADERLEN)
+                data_len = struct.unpack('q', header)[0]
+                LOGGING.debug('Response length: %s' % data_len)
+    
+                res_data = ''
+                # now we know the length of incoming data
+                # then wait for the data 
+                wait_len = data_len
+                while wait_len != 0:
+                    res_data += conn.recv(wait_len)
+                    wait_len = data_len - len(res_data)
+    
+                task.done(res_data)
+            except socket.error, msg:
+                LOGGING.error(str(msg))
+                # release task wait event
+                task.done(self._fail_data(task.N))
+                conn.close()
+                conn = self._connect()
+                if conn is not None:
+                    continue
+                else:
+                    LOGGING.error("Create connection failure, thread exit")
+                    return
 

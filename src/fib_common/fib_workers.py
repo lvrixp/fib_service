@@ -47,7 +47,15 @@ LOGGING = logger.get_log()
 LIMITS = 100000
 HEADERLEN = 8
 
-class FibServerTask(object):
+class FibTask(object):
+    '''Base Fib task placeholder
+    '''
+    def done(self, res):
+        '''Task done call back
+        '''
+        pass
+
+class FibServerTask(FibTask):
     '''Server side task definition
     '''
     def __init__(self, datalist, fd, datas, epoll_fd):
@@ -67,7 +75,7 @@ class FibServerTask(object):
         self.epoll_fd.modify(self.fd, select.EPOLLET | select.EPOLLOUT)
 
 
-class FibClientTask(object):
+class FibClientTask(FibTask):
     '''Client side task definition
     '''
     def __init__(self, N):
@@ -78,6 +86,8 @@ class FibClientTask(object):
         self.event = threading.Event()
 
     def done(self, res):
+        '''Call back to release event
+        '''
         # use list append to avoid copying string
         self.res.append(res)
         self.event.set()
@@ -181,6 +191,8 @@ class FibClientWorkers(FibWorkers):
         super(FibClientWorkers, self).__init__(thread_cnt)
         self._host = host
         self._port = port
+        self._conn = None
+
 
     def _connect(self):
         '''Connect to the server

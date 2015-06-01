@@ -7,7 +7,13 @@ TODO:
 
 import json
 
-class FibCliSrvMsg(object):
+class FibMsg(object):
+    '''Base message class placeholder
+    '''
+    def serialize(self):
+        pass
+
+class FibCliSrvMsg(FibMsg):
     '''Client-Server message definition
 
     Schema:
@@ -27,7 +33,7 @@ class FibCliSrvMsg(object):
         return FibCliSrvMsg(res['N'])
 
 
-class FibSrvCliMsg(object):
+class FibSrvCliMsg(FibMsg):
     '''Server-Client message definition
 
     Schema:

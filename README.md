@@ -214,6 +214,7 @@ Check the Apache error logs at /var/log/apache2/error.log if it failed.
 1. Service no response to normal input
 
     sudo service fibserver restart
+
     sudo service apache2 restart
 
 

@@ -51,6 +51,10 @@
     * Decoupling access point and business logic handling
     * Better performance potential with effective caching at server side
 
+### Architecture  ###
+
+![image](https://github.com/lvrixp/fib_service/blob/master/img/FibArchitecture.jpg)
+
 
 ### Class hierarchy ###
 

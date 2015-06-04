@@ -66,10 +66,10 @@ class FibServer(object):
         try:
             if self.daemonize:                
                 if self.verbose:
-                    daemon.daemonize("/", \
-                                     self.pidfile, \
-                                     "/dev/stdin", \
-                                     "/dev/stdout", \
+                    daemon.daemonize("/",
+                                     self.pidfile,
+                                     "/dev/stdin",
+                                     "/dev/stdout",
                                      "/dev/stderr")
                 else:
                     daemon.daemonize("/", self.pidfile)
@@ -96,13 +96,13 @@ class FibServer(object):
         
 
     def stop(self):
-        '''Stop the Event Aggregator and collect the resources used
+        '''Stop the the service
 
         TODO:
             More cleanup work like pid/lock file handling
         '''
         if not self.running_flag:
-            msg = "Stop ObjStoreEventSummaryCollector failed: " \
+            msg = "Stop fib server failed: " \
                   "already stopped."
             LOGGING.error(msg)
             raise Exception(msg)

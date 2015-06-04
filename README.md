@@ -37,7 +37,7 @@
 
 ### Core components and consideration ###
 * Flask web server
-    * Act as access point and rovide REST interface to end user
+    * Act as access point and provide REST interface to end user
     * Call fib client library to delegate the real work
     * Extendable to support more interface on demand
     * Scalability potential gained by deploying more access point
@@ -126,6 +126,7 @@
 3. Monitoring mechinism in case of service down.
 4. Sophisicated caching mechanism.
 5. Server side robustness improvement including error detection, etc.
+6. MISC management related, including log rotation, etc.
 
 ## Deployment (automation in TODO LIST) ##
 ### 0. Layout ###

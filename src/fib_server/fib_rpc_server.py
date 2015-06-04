@@ -1,3 +1,4 @@
+#!/usr/bin/python
 '''RPC server listen and serve requests
 
 Server will delegate the task to server workers.
